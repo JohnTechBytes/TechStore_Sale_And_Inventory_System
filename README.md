@@ -1,69 +1,91 @@
-# CodeIgniter 4 Application Starter
+TEAM BORJAKK :
 
-## What is CodeIgniter?
+FLORES YL JOHN
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+LACSON NOVIE
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+FAMOSO CARL
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+GUILLARAN CHRISTIAN
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+🚀 CodeIgniter 4 CRUD Application (CI4-CRUD)
 
-## Installation & updates
+Welcome to the CI4 CRUD project — a simple, powerful, and beginner-friendly CRUD (Create, Read, Update, Delete) application built using the modern CodeIgniter 4 framework.
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+This open-source CodeIgniter 4 CRUD example is perfect for developers who want to learn or build CRUD operations using MVC architecture in PHP.
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+🧰 Tech Stack
 
-## Setup
+Backend: PHP 8.x with CodeIgniter 4 and AJAX
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+Frontend: HTML5, CSS3, Bootstrap 4, AdminLTE
 
-## Important Change with index.php
+Database: MySQL
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+Architecture: MVC (Model-View-Controller)
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+🎯 Key Features
 
-**Please** read the user guide for a better explanation of how CI4 works!
+✅ Easy setup and configuration
 
-## Repository Management
+✅ Full CRUD functionality (Create, Read, Update, Delete)
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+✅ Bootstrap integration for responsive UI
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+✅ Built with modern PHP practices
 
-## Server Requirements
+✅ Simple and clean folder structure
 
-PHP version 8.2 or higher is required, with the following extensions installed:
+✅ Ready-to-use CodeIgniter 4 project
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+📥 Installation Guide
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
+1. Clone the Repository
+   
+git clone https://github.com/glenntheprogrammer/CI4-Crud.git
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+cd CI4-Crud OR Download Zip
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+2. Install Composer Dependencies
+   
+composer install
+
+3. Configure Environment or update .env with your MySQL database settings.
+   
+.env
+
+4. Run the Project
+   
+php spark serve
+
+Now open your browser and go to:
+
+http://localhost:8080
+
+💾 Database Setup
+
+Use the SQL file in the db file/ folder.
+
+Import it into your MySQL server using phpMyAdmin or the MySQL command line.
+
+🔍 Why Use This CodeIgniter 4 CRUD Project?
+Learn how to build CRUD with CodeIgniter 4
+
+✅ Great for beginners in PHP frameworks
+
+✅ Minimalistic and easy to modify
+
+✅ Ideal starting point for larger CodeIgniter 4 applications
+
+💡 Author
+
+Developed by @glenntheprogrammer
+
+📜 License
+This project is open-source and available under the MIT License.
+
+Login Credentials 
+
+User = glennazuelo1@gmail.com
+
+Pass = 1232
