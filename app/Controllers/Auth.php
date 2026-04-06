@@ -25,7 +25,7 @@ class Auth extends BaseController
             $this->clearFailedAttempts();
         }
 
-        return view('auth/login', ['lockout' => $lockout]);  // FIXED: use auth/login
+        return view('auth/login', ['lockout' => $lockout]);
     }
 
     public function auth()
@@ -69,6 +69,7 @@ class Auth extends BaseController
                 'user_id'   => $user['id'],
                 'email'     => $user['email'],
                 'name'      => $user['name'],
+                'username'  => $user['name'],      // <-- ADDED for LogModel
                 'role'      => $user['role'],
                 'logged_in' => true,
                 'last_activity' => time()

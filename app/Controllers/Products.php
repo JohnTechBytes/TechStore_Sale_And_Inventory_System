@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\ProductModel;
 use App\Models\CategoryModel;
 use App\Models\LogModel;
+use App\Models\SaleItemModel;
 
 class Products extends BaseController
 {
@@ -150,25 +151,35 @@ class Products extends BaseController
     /**
      * Delete product (and its image file)
      */
-    public function delete($id)
-    {
-        $product = $this->productModel->find($id);
-        if (!$product) {
-            return redirect()->to('/products')->with('error', 'Product not found');
-        }
+  public function delete($id)
+{
+    $saleItemModel = new \App\Models\SaleItemModel();
+    $productModel  = new \App\Models\ProductModel();
 
-        // Delete image file if exists
-        if (!empty($product['image']) && file_exists('uploads/products/' . $product['image'])) {
-            unlink('uploads/products/' . $product['image']);
-        }
-
-        $this->productModel->delete($id);
-
-        $logModel = new LogModel();
-        $logModel->addLog('Deleted product: ' . $product['name'], 'PRODUCT');
-
-        return redirect()->to('/products')->with('message', 'Product deleted');
+    // Check if product has any sales records
+    $hasSales = $saleItemModel->where('product_id', $id)->countAllResults();
+    if ($hasSales > 0) {
+        return redirect()->back()->with('error', 
+            "Cannot delete this product because it has been sold in {$hasSales} transaction(s). You can deactivate it instead."
+        );
     }
+
+    $product = $productModel->find($id);
+    if (!$product) {
+        return redirect()->back()->with('error', 'Product not found.');
+    }
+
+    // Delete product image if exists
+    if (!empty($product['image']) && file_exists(FCPATH . 'uploads/products/' . $product['image'])) {
+        unlink(FCPATH . 'uploads/products/' . $product['image']);
+    }
+
+    if ($productModel->delete($id)) {
+        return redirect()->to('/products')->with('message', 'Product deleted successfully.');
+    } else {
+        return redirect()->back()->with('error', 'Failed to delete product.');
+    }
+}
 
     /**
      * Helper: Upload product image

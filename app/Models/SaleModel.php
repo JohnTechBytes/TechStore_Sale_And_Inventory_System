@@ -28,4 +28,18 @@ class SaleModel extends Model
                     ->selectSum('grand_total')
                     ->first();
     }
+    // app/Models/SaleItemModel.php
+
+public function getTopProducts($year, $month, $limit = 10)
+{
+    return $this->select('products.id, products.name, products.sku, SUM(sale_items.quantity) as total_quantity, SUM(sale_items.total_price) as total_revenue')
+                ->join('products', 'products.id = sale_items.product_id')
+                ->join('sales', 'sales.id = sale_items.sale_id')
+                ->where('YEAR(sales.sale_date)', $year)
+                ->where('MONTH(sales.sale_date)', $month)
+                ->groupBy('sale_items.product_id')
+                ->orderBy('total_quantity', 'DESC')
+                ->limit($limit)
+                ->find();
+}
 }

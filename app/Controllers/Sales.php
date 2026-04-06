@@ -81,100 +81,118 @@ public function removeFromCart($product_id)
 }
     // Checkout (non‑AJAX – uses standard POST)
     // -----------------------------------------------------------------
-    public function checkout()
-    {
-        $cart = session()->get('cart');
-        if (empty($cart)) {
+  public function checkout()
+{
+    // First, check if cart_data was sent (from client-side cart)
+    $cartData = $this->request->getPost('cart_data');
+    if ($cartData) {
+        $cartArray = json_decode($cartData, true);
+        if (empty($cartArray)) {
             return redirect()->to('/sales/pos')->with('error', 'Cart is empty');
         }
-
-        // Calculate grand total
-        $total = 0;
-        foreach ($cart as $item) {
-            $total += $item['price'] * $item['qty'];
+        // Convert to session format (same as your old addToCart)
+        $sessionCart = [];
+        foreach ($cartArray as $item) {
+            $sessionCart[$item['id']] = [
+                'id'    => $item['id'],
+                'name'  => $item['name'],
+                'price' => (float)$item['price'],
+                'qty'   => (int)$item['qty']
+            ];
         }
+        session()->set('cart', $sessionCart);
+    }
 
-        $saleModel = new SaleModel();
-        $invoice = 'INV-' . date('YmdHis') . rand(100, 999);
+    // Now get cart from session (works for both old and new)
+    $cart = session()->get('cart');
+    if (empty($cart)) {
+        return redirect()->to('/sales/pos')->with('error', 'Cart is empty');
+    }
 
-        $saleId = $saleModel->insert([
-            'invoice_no'     => $invoice,
-            'user_id'        => session()->get('user_id'),
-            'customer_name'  => $this->request->getPost('customer_name'),
-            'total_amount'   => $total,
-            'discount'       => 0,
-            'tax'            => 0,
-            'grand_total'    => $total,
-            'payment_method' => $this->request->getPost('payment_method'),
-            'sale_date'      => date('Y-m-d H:i:s')
+    // Calculate grand total
+    $total = 0;
+    foreach ($cart as $item) {
+        $total += $item['price'] * $item['qty'];
+    }
+
+    $saleModel = new SaleModel();
+    $invoice = 'INV-' . date('YmdHis') . rand(100, 999);
+
+    $saleId = $saleModel->insert([
+        'invoice_no'     => $invoice,
+        'user_id'        => session()->get('user_id'),
+        'customer_name'  => $this->request->getPost('customer_name'),
+        'total_amount'   => $total,
+        'discount'       => 0,
+        'tax'            => 0,
+        'grand_total'    => $total,
+        'payment_method' => $this->request->getPost('payment_method'),
+        'sale_date'      => date('Y-m-d H:i:s')
+    ]);
+
+    if (!$saleId) {
+        return redirect()->to('/sales/pos')->with('error', 'Failed to create sale record');
+    }
+
+    $saleItemModel = new SaleItemModel();
+    $productModel = new ProductModel();
+    $stockMovementModel = new StockMovementModel();
+
+    foreach ($cart as $item) {
+        // Insert sale item
+        $saleItemModel->insert([
+            'sale_id'    => $saleId,
+            'product_id' => $item['id'],
+            'quantity'   => $item['qty'],
+            'price'      => $item['price'],
+            'total'      => $item['price'] * $item['qty']
         ]);
 
-        if (!$saleId) {
-            return redirect()->to('/sales/pos')->with('error', 'Failed to create sale record');
+        // Reduce stock
+        $product = $productModel->find($item['id']);
+        if ($product) {
+            $newStock = $product['stock'] - $item['qty'];
+            $productModel->update($item['id'], ['stock' => $newStock]);
         }
 
-        $saleItemModel = new SaleItemModel();
-        $productModel = new ProductModel();
-        $stockMovementModel = new StockMovementModel();
-
-        foreach ($cart as $item) {
-            // Insert sale item
-            $saleItemModel->insert([
-                'sale_id'    => $saleId,
-                'product_id' => $item['id'],
-                'quantity'   => $item['qty'],
-                'price'      => $item['price'],
-                'total'      => $item['price'] * $item['qty']
-            ]);
-
-            // Reduce stock
-            $product = $productModel->find($item['id']);
-            if ($product) {
-                $newStock = $product['stock'] - $item['qty'];
-                $productModel->update($item['id'], ['stock' => $newStock]);
-            }
-
-            // Log stock movement
-            $stockMovementModel->insert([
-                'product_id' => $item['id'],
-                'quantity'   => $item['qty'],
-                'type'       => 'out',
-                'reference'  => $invoice,
-                'user_id'    => session()->get('user_id')
-            ]);
-        }
-
-        // Log sale activity
-        $logModel = new LogModel();
-        $logModel->addLog('Sale completed: ' . $invoice, 'SALE');
-
-        // Clear cart
-        session()->remove('cart');
-
-        return redirect()->to('/sales/receipt/' . $saleId)->with('message', 'Sale completed successfully');
+        // Log stock movement
+        $stockMovementModel->insert([
+            'product_id' => $item['id'],
+            'quantity'   => $item['qty'],
+            'type'       => 'out',
+            'reference'  => $invoice,
+            'user_id'    => session()->get('user_id')
+        ]);
     }
+
+    // Log sale activity
+    $logModel = new LogModel();
+    $logModel->addLog('Sale completed: ' . $invoice, 'SALE');
+
+    // Clear cart
+    session()->remove('cart');
+
+    return redirect()->to('/sales/receipt/' . $saleId)->with('message', 'Sale completed successfully');
+}
 
     // -----------------------------------------------------------------
     // Receipt page
     // -----------------------------------------------------------------
-    public function receipt($id)
-    {
-        $saleModel = new SaleModel();
-        $saleItemModel = new SaleItemModel();
-
-        $sale = $saleModel->find($id);
-        if (!$sale) {
-            return redirect()->to('/sales/history')->with('error', 'Receipt not found');
-        }
-
-        $items = $saleItemModel->select('sale_items.*, products.name')
-                               ->join('products', 'products.id = sale_items.product_id')
-                               ->where('sale_id', $id)
-                               ->findAll();
-
-        return view('sales/receipt', ['sale' => $sale, 'items' => $items]);
+  public function receipt($id)
+{
+    $db = \Config\Database::connect();
+    $sale = $db->table('sales')->where('id', $id)->get()->getRowArray();
+    if (!$sale) {
+        return redirect()->to('/sales/history')->with('error', 'Receipt not found');
     }
-
+    $items = $db->table('sale_items')
+                ->select('sale_items.*, products.name')
+                ->join('products', 'products.id = sale_items.product_id')
+                ->where('sale_id', $id)
+                ->get()
+                ->getResultArray();
+    return view('sales/receipt', ['sale' => $sale, 'items' => $items]);
+}
     // -----------------------------------------------------------------
     // Sales history
     // -----------------------------------------------------------------
@@ -184,4 +202,99 @@ public function removeFromCart($product_id)
         $data['sales'] = $saleModel->orderBy('sale_date', 'DESC')->findAll();
         return view('sales/history', $data);
     }
+public function processCheckout()
+{
+    // Enable error display temporarily
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+
+    if ($this->request->getMethod() !== 'post') {
+        return redirect()->to('/pos');
+    }
+
+    $cart = json_decode($this->request->getPost('cart_data'), true);
+    if (empty($cart)) {
+        return redirect()->back()->with('error', 'Cart is empty');
+    }
+
+    $db = \Config\Database::connect();
+    $db->transStart();
+
+    try {
+        $totalAmount = 0;
+        foreach ($cart as $item) {
+            $totalAmount += $item['price'] * $item['qty'];
+            // Deduct stock
+            $db->table('products')->where('id', $item['id'])
+               ->set('stock', 'stock - ' . (int)$item['qty'], false)
+               ->update();
+        }
+
+        // Use EXACT same column names as your working `checkout` method
+        $invoiceNo = 'INV-' . date('YmdHis') . rand(100, 999);
+        $userId = session()->get('user_id');
+        if (!$userId) {
+            throw new \Exception('User not logged in (user_id missing)');
+        }
+
+        $insertData = [
+            'invoice_no'     => $invoiceNo,
+            'user_id'        => $userId,
+            'customer_name'  => $this->request->getPost('customer_name'),
+            'total_amount'   => $totalAmount,
+            'discount'       => 0,
+            'tax'            => 0,
+            'grand_total'    => $totalAmount,
+            'payment_method' => $this->request->getPost('payment_method'),
+            'sale_date'      => date('Y-m-d H:i:s')
+        ];
+
+        if (!$db->table('sales')->insert($insertData)) {
+            throw new \Exception('Failed to insert sale: ' . print_r($db->error(), true));
+        }
+        $saleId = $db->insertID();
+
+        foreach ($cart as $item) {
+            $db->table('sale_items')->insert([
+                'sale_id'    => $saleId,
+                'product_id' => $item['id'],
+                'quantity'   => $item['qty'],
+                'price'      => $item['price'],
+                'total'      => $item['price'] * $item['qty']
+            ]);
+        }
+
+        $db->transCommit();
+
+        // Log sale
+        $logModel = new LogModel();
+        $logModel->addLog('Sale completed: ' . $invoiceNo, 'SALE');
+
+        session()->remove('cart');
+
+        // ✅ Redirect to receipt
+        return redirect()->to('/sales/receipt/' . $saleId)
+                         ->with('success', 'Sale completed successfully!');
+
+    } catch (\Exception $e) {
+        $db->transRollback();
+        // Show error on screen for debugging (remove after fix)
+        die('Checkout Error: ' . $e->getMessage());
+    }
+}
+public function syncCart()
+{
+    $input = $this->request->getJSON(true);
+    $cart = $input['cart'] ?? [];
+    session()->remove('cart');
+    foreach ($cart as $item) {
+        session()->set('cart[' . $item['id'] . ']', [
+            'id'    => $item['id'],
+            'name'  => $item['name'],
+            'price' => $item['price'],
+            'qty'   => $item['qty']
+        ]);
+    }
+    return $this->response->setJSON(['success' => true]);
+}
 }

@@ -44,10 +44,10 @@ $routes->get('/logout', 'Auth::logout');
 $routes->group('', ['filter' => 'auth'], function($routes) {
     
     // Dashboard
-    $routes->get('/dashboard', 'Dashboard::index');
+$routes->get('/dashboard', 'Dashboard::index');
     
     // Sales (POS, Cart, History, Receipt)
-     $routes->get('/sales/pos', 'Sales::pos');
+$routes->get('/sales/pos', 'Sales::pos');
 $routes->post('/sales/addToCart', 'Sales::addToCart');
 $routes->get('/sales/getCart', 'Sales::getCart');
 $routes->post('/sales/updateCart', 'Sales::updateCart');
@@ -55,20 +55,25 @@ $routes->get('/sales/removeFromCart/(:num)', 'Sales::removeFromCart/$1');
 $routes->post('/sales/checkout', 'Sales::checkout');
 $routes->get('/sales/receipt/(:num)', 'Sales::receipt/$1');
 $routes->get('/sales/history', 'Sales::history');
+$routes->get('/pos', 'Sales::pos');   // optional, but keep if you use /pos
+$routes->post('/sales/syncCart', 'Sales::syncCart');
+
     
     // Reports (accessible by both admin and staff)
-    $routes->get('/reports', 'Reports::index');
+ $routes->get('/reports', 'Reports::index');
     
     // ========== ADMIN ONLY ROUTES ==========
-    $routes->group('', ['filter' => 'auth:admin'], function($routes) {
+ $routes->group('', ['filter' => 'auth:admin'], function($routes) {
         
-        // Product Management
-        $routes->get('/products', 'Products::index');
-        $routes->get('/products/create', 'Products::create');
-        $routes->post('/products/store', 'Products::store');
-        $routes->get('/products/edit/(:num)', 'Products::edit/$1');
-        $routes->post('/products/update/(:num)', 'Products::update/$1');
-        $routes->get('/products/delete/(:num)', 'Products::delete/$1');
+ 
+// Products
+$routes->get('/products', 'Products::index');
+$routes->get('/products/create', 'Products::create');
+$routes->post('/products/store', 'Products::store');
+$routes->get('/products/edit/(:num)', 'Products::edit/$1');
+$routes->put('/products/update/(:num)', 'Products::update/$1');   // <-- ADD THIS
+$routes->delete('/products/delete/(:num)', 'Products::delete/$1');
+$routes->post('/sales/processCheckout', 'Sales::processCheckout');
         
         // Category Management
         $routes->get('/categories', 'Categories::index');
@@ -86,6 +91,10 @@ $routes->get('/sales/history', 'Sales::history');
        $routes->post('/users/update/(:num)', 'Users::update/$1');
         $routes->put('/users/update/(:num)', 'Users::update/$1');
         $routes->get('/users/delete/(:num)', 'Users::delete/$1');
+
+        // Activity Logs (Audit Trail)
+$routes->get('/audit', 'AuditController::index');
+$routes->get('/audit/getLogs', 'AuditController::getLogs');
     });
 });
 
