@@ -4,7 +4,7 @@
              alt="Logo" 
              class="brand-image img-circle elevation-3" 
              style="opacity: .9">
-        <span class="brand-text font-weight-bold" style="color: white;">INVENTORY SYS</span>
+        <span class="brand-text font-weight-bold" style="color: white;">BORJUK STORE</span>
     </div>
     <div class="sidebar">
         <nav class="mt-2">

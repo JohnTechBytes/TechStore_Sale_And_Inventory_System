@@ -2,13 +2,95 @@
 <?= $this->section('content') ?>
 
 <style>
-    .product-card { transition: transform 0.2s; border-radius: 1rem; overflow: hidden; }
-    .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-    .product-img { height: 120px; object-fit: cover; background: #f8f9fa; }
-    .cart-item-img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-right: 8px; }
-    .cart-total { font-size: 1.3rem; font-weight: bold; }
-    .checkout-btn { background: linear-gradient(135deg, #28a745, #20c997); border: none; font-weight: 600; }
-    .qty-btn { width: 28px; height: 28px; padding: 0; }
+    .product-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 1rem;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    /* Image container – fixed aspect ratio 1:1 */
+    .product-img-wrapper {
+        width: 100%;
+        padding-top: 100%; /* 1:1 aspect ratio */
+        position: relative;
+        background: #f8f9fa;
+        overflow: hidden;
+    }
+    .product-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;  /* Ensures image covers the area without distortion */
+        object-position: center;
+    }
+    .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 0.75rem;
+    }
+    .product-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        line-height: 1.3;
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .product-price {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #0d6efd;
+        margin-bottom: 0.5rem;
+    }
+    .cart-item-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 8px;
+    }
+    .cart-total {
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+    .checkout-btn {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        font-weight: 600;
+    }
+    .qty-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .product-title {
+            font-size: 0.8rem;
+        }
+        .product-price {
+            font-size: 0.9rem;
+        }
+        .input-group-sm .btn {
+            padding: 0.2rem 0.4rem;
+        }
+        .qty-val {
+            width: 40px !important;
+        }
+    }
 </style>
 
 <div class="content-wrapper">
@@ -20,7 +102,7 @@
     <div class="content">
         <div class="container-fluid">
             <div class="row">
-                <!-- Products Grid (static, loads with page) -->
+                <!-- Products Grid -->
                 <div class="col-md-8">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
@@ -35,14 +117,16 @@
                                     <?php foreach($products as $p): ?>
                                     <div class="col-md-3 col-sm-4 col-6 mb-3 product-item" data-name="<?= strtolower($p['name']) ?>">
                                         <div class="card product-card h-100">
-                                            <img src="<?= base_url(!empty($p['image']) ? 'uploads/products/'.$p['image'] : 'assets/img/no-image.png') ?>" 
-                                                 class="product-img card-img-top" 
-                                                 alt="<?= esc($p['name']) ?>"
-                                                 loading="lazy"
-                                                 onerror="this.src='<?= base_url('assets/img/no-image.png') ?>'">
-                                            <div class="card-body text-center p-2">
-                                                <h6 class="card-title mb-1"><?= esc($p['name']) ?></h6>
-                                                <p class="text-primary fw-bold">₱<?= number_format($p['selling_price'], 2) ?></p>
+                                            <div class="product-img-wrapper">
+                                                <img src="<?= base_url(!empty($p['image']) ? 'uploads/products/'.$p['image'] : 'assets/img/no-image.png') ?>" 
+                                                     class="product-img" 
+                                                     alt="<?= esc($p['name']) ?>"
+                                                     loading="lazy"
+                                                     onerror="this.src='<?= base_url('assets/img/no-image.png') ?>'">
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <h6 class="product-title"><?= esc($p['name']) ?></h6>
+                                                <div class="product-price">₱<?= number_format($p['selling_price'], 2) ?></div>
                                                 <div class="input-group input-group-sm justify-content-center">
                                                     <button class="btn btn-outline-secondary qty-decr" type="button">−</button>
                                                     <input type="number" class="form-control form-control-sm text-center qty-val" value="1" min="1" max="99" style="width: 50px;">
@@ -67,7 +151,7 @@
                     </div>
                 </div>
 
-                <!-- Cart Sidebar – 100% client-side, instant -->
+                <!-- Cart Sidebar (unchanged) -->
                 <div class="col-md-4">
                     <div class="card shadow-sm sticky-top" style="top: 20px;">
                         <div class="card-header bg-warning text-white">
@@ -103,8 +187,8 @@
                                     </select>
                                 </div>
                                 <button type="submit" class="btn btn-success btn-block checkout-btn" id="checkoutBtn" disabled>
-    <i class="fas fa-check-circle"></i> Checkout
-</button>
+                                    <i class="fas fa-check-circle"></i> Checkout
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -115,10 +199,9 @@
 </div>
 
 <script>
-// Pure client‑side cart – no AJAX, no delays
+// JavaScript remains exactly the same as before
 let cart = [];
 
-// Load saved cart from localStorage (optional)
 let savedCart = localStorage.getItem('pos_cart');
 if(savedCart) {
     try {
@@ -126,7 +209,6 @@ if(savedCart) {
     } catch(e) {}
 }
 
-// Helper: render cart instantly
 function renderCart() {
     let tbody = '';
     let total = 0;
@@ -159,13 +241,10 @@ function renderCart() {
     }
     document.getElementById('cartBody').innerHTML = tbody;
     localStorage.setItem('pos_cart', JSON.stringify(cart));
-    
-    // Attach events for newly created buttons
     attachCartEvents();
 }
 
 function attachCartEvents() {
-    // Quantity minus
     document.querySelectorAll('.qty-minus').forEach(btn => {
         btn.onclick = () => {
             let idx = parseInt(btn.getAttribute('data-index'));
@@ -175,7 +254,6 @@ function attachCartEvents() {
             }
         };
     });
-    // Quantity plus
     document.querySelectorAll('.qty-plus').forEach(btn => {
         btn.onclick = () => {
             let idx = parseInt(btn.getAttribute('data-index'));
@@ -183,7 +261,6 @@ function attachCartEvents() {
             renderCart();
         };
     });
-    // Manual quantity input change
     document.querySelectorAll('.cart-qty').forEach(input => {
         input.onchange = () => {
             let idx = parseInt(input.getAttribute('data-index'));
@@ -193,7 +270,6 @@ function attachCartEvents() {
             renderCart();
         };
     });
-    // Remove item
     document.querySelectorAll('.remove-item').forEach(btn => {
         btn.onclick = () => {
             let idx = parseInt(btn.getAttribute('data-index'));
@@ -203,7 +279,6 @@ function attachCartEvents() {
     });
 }
 
-// Add product to cart (instant)
 function addToCart(id, name, price, qty, img) {
     let existing = cart.find(item => item.id == id);
     if(existing) {
@@ -212,7 +287,6 @@ function addToCart(id, name, price, qty, img) {
         cart.push({ id, name, price, qty, img });
     }
     renderCart();
-    // Flash "Added" on the button
     let btn = document.querySelector(`.add-to-cart[data-id="${id}"]`);
     if(btn) {
         let originalHtml = btn.innerHTML;
@@ -221,7 +295,6 @@ function addToCart(id, name, price, qty, img) {
     }
 }
 
-// Attach "Add to Cart" listeners for static products
 document.querySelectorAll('.add-to-cart').forEach(btn => {
     btn.onclick = (e) => {
         e.preventDefault();
@@ -234,7 +307,6 @@ document.querySelectorAll('.add-to-cart').forEach(btn => {
     };
 });
 
-// Quantity + / - on product cards (static)
 document.querySelectorAll('.qty-incr').forEach(inc => {
     inc.onclick = () => {
         let input = inc.closest('.input-group').querySelector('.qty-val');
@@ -249,7 +321,6 @@ document.querySelectorAll('.qty-decr').forEach(dec => {
     };
 });
 
-// Product search filter
 document.getElementById('productSearch').addEventListener('keyup', function() {
     let val = this.value.toLowerCase();
     document.querySelectorAll('.product-item').forEach(el => {
@@ -258,7 +329,6 @@ document.getElementById('productSearch').addEventListener('keyup', function() {
     });
 });
 
-// Checkout: pack cart into hidden field and submit
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     if(cart.length === 0) {
         alert('Cart is empty');
@@ -266,12 +336,10 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         return false;
     }
     document.getElementById('cartData').value = JSON.stringify(cart);
-    // Clear local storage after successful submit (optional)
     localStorage.removeItem('pos_cart');
     return true;
 });
 
-// Helper escape HTML
 function escapeHtml(str) {
     if(!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -282,7 +350,6 @@ function escapeHtml(str) {
     });
 }
 
-// Initial render
 renderCart();
 </script>
 <?= $this->endSection() ?>
